@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Label Printer Kiosk
+Exec=/opt/label_printer/deploy/start-kiosk.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true

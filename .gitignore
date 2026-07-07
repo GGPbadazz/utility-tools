@@ -1,0 +1,27 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local runtime data
+logs/
+records/
+src/data/senders.json
+src/data/used_batches.json
+
+# Vendor SDKs and installers should be installed locally.
+vendor/
+*.whl
+*.deb
+*.exe
+*.nupkg
+
+# Local release archives
+dist/
+*.tar.gz
+*.zip
+
+# Local secrets and deployment notes
+.env
+*.local
+serverinfo.md

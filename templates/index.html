@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>样品标签打印系统</title>
+    <link rel="stylesheet" href="/static/css/workshop.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 页面0: 选择车间 -->
+        <div id="page-workshop" class="page active">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <span class="system-title">样品标签打印系统</span>
+                    <div class="header-right">
+                        <div class="current-time" id="current-time"></div>
+                        <button class="btn btn-records" onclick="goToRecords()">
+                            📋 送样记录
+                        </button>
+                        <button class="btn btn-settings-top" onclick="goToSettings()">
+                            ⚙️ 设置
+                        </button>
+                    </div>
+                </div>
+                <div class="sub-title highlight">请选择车间</div>
+            </div>
+            <div class="page-content">
+                <!-- 延续上月生产选项 -->
+                <div class="last-month-option-center">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="last-month-checkbox" onchange="toggleLastMonth()">
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">📅 延续上月生产</span>
+                    </label>
+                </div>
+                <div class="workshop-grid" id="workshop-grid">
+                    <!-- 车间按钮动态生成 -->
+                </div>
+            </div>
+            <div class="page-footer">
+                <div class="footer-left">
+                    <div class="printer-status" id="printer-status">
+                        <span class="status-dot offline"></span>
+                        <span class="status-text">检测打印机中...</span>
+                    </div>
+                    <div class="month-info" id="month-info">
+                        <span class="month-text">当月: --</span>
+                    </div>
+                </div>
+                <div class="footer-right">
+                    <button class="btn btn-restart" onclick="showRestartConfirm()">
+                        🔄 重启系统
+                    </button>
+                    <button class="btn btn-reset" id="btn-reset-month" onclick="showResetConfirm()">
+                        🗑️ 月度重置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 重启确认弹窗 -->
+        <div id="restart-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-icon">🔄</div>
+                <div class="modal-title">确认重启系统</div>
+                <div class="modal-message">
+                    确定要重启标签打印系统吗？<br>
+                    系统将在几秒后自动恢复。
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" onclick="closeRestartModal()">取消</button>
+                    <button class="btn btn-confirm-restart" onclick="confirmRestart()">确认重启</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 重置确认弹窗 -->
+        <div id="reset-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-icon" id="reset-icon">⚠️</div>
+                <div class="modal-title" id="reset-title">确认月度重置</div>
+                <div class="modal-message" id="reset-message">
+                    确定要重置当前月份的所有批号数据吗？<br>
+                    此操作不可撤销！
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" onclick="closeResetModal()">取消</button>
+                    <button class="btn btn-confirm-reset" onclick="confirmReset()">确认重置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 送样记录页面 -->
+        <div id="page-records" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1>📋 送样记录</h1>
+                    <div class="current-time" id="current-time-records"></div>
+                </div>
+            </div>
+            <div class="page-content records-content">
+                <div class="records-filter">
+                    <select id="records-month-filter" class="records-select" onchange="loadRecords()">
+                        <!-- 月份选项动态生成 -->
+                    </select>
+                </div>
+                <div class="records-list" id="records-list">
+                    <!-- 记录列表动态生成 -->
+                </div>
+            </div>
+            <div class="page-footer">
+                <button class="btn btn-back" onclick="goToWorkshop()">← 返回主页</button>
+            </div>
+        </div>
+
+        <!-- 记录详情查看弹窗 -->
+        <div id="record-viewer-modal" class="modal record-viewer-modal">
+            <div class="record-viewer-content">
+                <iframe id="record-iframe" class="record-iframe"></iframe>
+            </div>
+        </div>
+
+        <!-- 页面1: 选择样品类型 -->
+        <div id="page-samples" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1 id="samples-title">选择样品类型</h1>
+                    <div class="current-time" id="current-time-2"></div>
+                </div>
+            </div>
+            <div class="page-content">
+                <!-- 自定义样品输入框（仅自定义样品显示，放在上方） -->
+                <div id="custom-sample-input" class="custom-sample-input" style="display: none;">
+                    <div class="custom-input-title">自定义样品名称</div>
+                    <input type="text" id="custom-sample-name" class="custom-sample-field" placeholder="请输入样品名称" maxlength="20">
+                    <button class="btn btn-confirm-custom" onclick="confirmCustomSample()">确认</button>
+                </div>
+                <div class="sample-grid" id="sample-grid">
+                    <!-- 样品按钮动态生成 -->
+                </div>
+            </div>
+            <div class="page-footer">
+                <button class="btn btn-back" onclick="goToWorkshop()">← 返回选择车间</button>
+            </div>
+        </div>
+
+        <!-- 页面2: 选择批号 -->
+        <div id="page-batch" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1 id="batch-title">选择批号</h1>
+                    <div class="current-time" id="current-time-3"></div>
+                </div>
+                <div class="batch-prefix" id="batch-prefix">批号前缀: A-2511</div>
+            </div>
+            <div class="page-content">
+                <div class="batch-grid" id="batch-grid">
+                    <!-- 批号按钮动态生成 -->
+                </div>
+                <div class="pagination">
+                    <button class="btn btn-page" id="btn-prev-batch" onclick="prevBatchPage()">
+                        ◀ 上一页
+                    </button>
+                    <span class="page-info" id="batch-page-info">001-005</span>
+                    <button class="btn btn-page" id="btn-next-batch" onclick="nextBatchPage()">
+                        下一页 ▶
+                    </button>
+                </div>
+            </div>
+            <div class="page-footer">
+                <button class="btn btn-back" onclick="goToSamples()">← 返回</button>
+            </div>
+        </div>
+
+        <!-- 页面2b: 选择分段样品子序号 -->
+        <div id="page-sub" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1 id="sub-title">分段样品 - 选择子序号</h1>
+                    <div class="current-time" id="current-time-4"></div>
+                </div>
+                <div class="batch-prefix" id="sub-prefix">批号: P-2511001-__</div>
+            </div>
+            <div class="page-content">
+                <div class="batch-grid" id="sub-grid">
+                    <!-- 子序号按钮动态生成 -->
+                </div>
+                <div class="pagination">
+                    <button class="btn btn-page" id="btn-prev-sub" onclick="prevSubPage()">
+                        ◀ 上一页
+                    </button>
+                    <span class="page-info" id="sub-page-info">01-05</span>
+                    <button class="btn btn-page" id="btn-next-sub" onclick="nextSubPage()">
+                        下一页 ▶
+                    </button>
+                </div>
+            </div>
+            <div class="page-footer">
+                <button class="btn btn-back" onclick="goToBatch()">← 返回</button>
+            </div>
+        </div>
+
+        <!-- 页面3: 选择送样人 -->
+        <div id="page-sender" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1>选择送样人</h1>
+                    <div class="current-time" id="current-time-5"></div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="sender-grid" id="sender-grid">
+                    <!-- 送样人按钮动态生成 -->
+                </div>
+            </div>
+            <div class="page-footer">
+                <button class="btn btn-back" onclick="goBackFromSender()">← 返回</button>
+            </div>
+        </div>
+
+        <!-- 页面4: 手写签名 -->
+        <div id="page-signature" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1>请签名确认</h1>
+                    <div class="current-time" id="current-time-6"></div>
+                </div>
+                <div class="sender-info">送样人: <span id="signature-sender">张三</span></div>
+            </div>
+            <div class="page-content signature-content">
+                <div class="signature-container">
+                    <canvas id="signature-canvas"></canvas>
+                    <div class="signature-hint">请在此处手写签名</div>
+                </div>
+            </div>
+            <div class="page-footer confirm-footer">
+                <button class="btn btn-back" onclick="goToSender()">← 返回</button>
+                <button class="btn btn-clear-sign" onclick="clearSignature()">🗑️ 清除重签</button>
+                <button class="btn btn-next" id="btn-to-confirm" onclick="goToConfirmFromSignature()">
+                    下一步 →
+                </button>
+            </div>
+        </div>
+
+        <!-- 页面5: 确认打印 -->
+        <div id="page-confirm" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1>确认打印</h1>
+                    <div class="current-time" id="current-time-7"></div>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="confirm-layout">
+                    <div class="confirm-card">
+                        <div class="confirm-row">
+                            <span class="confirm-label">车间</span>
+                            <span class="confirm-value" id="confirm-workshop">生产线A</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">样品名称</span>
+                            <span class="confirm-value" id="confirm-name">原料样品</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">批号</span>
+                            <span class="confirm-value" id="confirm-batch">RM-2607004</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">取样时间</span>
+                            <span class="confirm-value" id="confirm-time">2025-11-29 14:32:05</span>
+                        </div>
+                        <div class="confirm-row">
+                            <span class="confirm-label">送样人</span>
+                            <span class="confirm-value" id="confirm-sender">操作员A</span>
+                        </div>
+                        <div class="confirm-row" id="reprint-notice" style="display: none;">
+                            <span class="confirm-label">提示</span>
+                            <span class="confirm-value reprint">重新打印</span>
+                        </div>
+                    </div>
+
+                    <div class="copies-card">
+                        <div class="copies-section">
+                            <span class="copies-label">打印份数</span>
+                            <div class="copies-control">
+                                <button class="btn btn-copies" onclick="decreaseCopies()">−</button>
+                                <span class="copies-value" id="copies-value">1</span>
+                                <button class="btn btn-copies" onclick="increaseCopies()">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page-footer confirm-footer">
+                <button class="btn btn-back" onclick="goBack()">← 返回修改</button>
+                <button class="btn btn-print" id="btn-print" onclick="confirmPrint()">
+                    确认打印 🖨️
+                </button>
+            </div>
+        </div>
+
+        <!-- 打印结果弹窗 -->
+        <div id="result-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-icon" id="result-icon">✓</div>
+                <div class="modal-title" id="result-title">打印成功</div>
+                <div class="modal-message" id="result-message">标签已发送到打印机</div>
+                <button class="btn btn-modal" onclick="closeModal()">继续打印</button>
+            </div>
+        </div>
+
+        <!-- 设置页面 -->
+        <div id="page-settings" class="page">
+            <div class="page-header compact">
+                <div class="header-row">
+                    <h1>⚙️ 系统设置</h1>
+                    <div class="current-time" id="current-time-settings"></div>
+                </div>
+            </div>
+            <div class="page-content settings-content">
+                <div class="settings-section">
+                    <h2 class="settings-section-title">👤 送样人管理</h2>
+                    <div class="settings-workshop-tabs" id="settings-workshop-tabs">
+                        <!-- 车间标签动态生成 -->
+                    </div>
+                    <div class="settings-sender-list" id="settings-sender-list">
+                        <!-- 送样人列表动态生成 -->
+                    </div>
+                    <div class="settings-add-sender">
+                        <input type="text" id="new-sender-name" class="settings-input" placeholder="输入新送样人姓名" maxlength="10">
+                        <button class="btn btn-add-sender" onclick="addNewSender()">➕ 添加</button>
+                    </div>
+                </div>
+            </div>
+            <div class="page-footer">
+                <button class="btn btn-back" onclick="goToWorkshop()">← 返回主页</button>
+            </div>
+        </div>
+
+        <!-- 删除确认弹窗 -->
+        <div id="delete-sender-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-icon">🗑️</div>
+                <div class="modal-title">确认删除</div>
+                <div class="modal-message" id="delete-sender-message">确定要删除送样人吗？</div>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" onclick="closeDeleteSenderModal()">取消</button>
+                    <button class="btn btn-confirm-reset" onclick="confirmDeleteSender()">确认删除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载遮罩 -->
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">处理中...</div>
+        </div>
+    </div>
+
+    <!-- 屏幕键盘 -->
+    <div id="onscreen-keyboard" class="osk" style="display:none">
+        <div class="osk-row">
+            <button class="osk-key" data-val="q">q</button><button class="osk-key" data-val="w">w</button><button class="osk-key" data-val="e">e</button><button class="osk-key" data-val="r">r</button><button class="osk-key" data-val="t">t</button><button class="osk-key" data-val="y">y</button><button class="osk-key" data-val="u">u</button><button class="osk-key" data-val="i">i</button><button class="osk-key" data-val="o">o</button><button class="osk-key" data-val="p">p</button>
+        </div>
+        <div class="osk-row">
+            <button class="osk-key" data-val="a">a</button><button class="osk-key" data-val="s">s</button><button class="osk-key" data-val="d">d</button><button class="osk-key" data-val="f">f</button><button class="osk-key" data-val="g">g</button><button class="osk-key" data-val="h">h</button><button class="osk-key" data-val="j">j</button><button class="osk-key" data-val="k">k</button><button class="osk-key" data-val="l">l</button>
+        </div>
+        <div class="osk-row">
+            <button class="osk-key" data-val="z">z</button><button class="osk-key" data-val="x">x</button><button class="osk-key" data-val="c">c</button><button class="osk-key" data-val="v">v</button><button class="osk-key" data-val="b">b</button><button class="osk-key" data-val="n">n</button><button class="osk-key" data-val="m">m</button><button class="osk-key" data-val="-">-</button><button class="osk-key" data-val="_">_</button>
+        </div>
+        <div class="osk-row">
+            <button class="osk-key" data-val="1">1</button><button class="osk-key" data-val="2">2</button><button class="osk-key" data-val="3">3</button><button class="osk-key" data-val="4">4</button><button class="osk-key" data-val="5">5</button><button class="osk-key" data-val="6">6</button><button class="osk-key" data-val="7">7</button><button class="osk-key" data-val="8">8</button><button class="osk-key" data-val="9">9</button><button class="osk-key" data-val="0">0</button>
+        </div>
+        <div class="osk-row osk-row-action">
+            <button class="osk-key osk-space" data-val=" ">空格</button>
+            <button class="osk-key osk-backspace" id="osk-backspace">← 删除</button>
+            <button class="osk-key osk-clear" id="osk-clear">清空</button>
+            <button class="osk-key osk-done" id="osk-done">确认 ✓</button>
+        </div>
+    </div>
+
+    <script src="/static/js/workshop.js"></script>
+</body>
+</html>

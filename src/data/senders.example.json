@@ -1,0 +1,36 @@
+{
+  "default": [
+    {
+      "id": "operator_a",
+      "name": "操作员A"
+    },
+    {
+      "id": "operator_b",
+      "name": "操作员B"
+    }
+  ],
+  "1": [
+    {
+      "id": "line_a_user",
+      "name": "生产线A人员"
+    }
+  ],
+  "2": [
+    {
+      "id": "line_b_user",
+      "name": "生产线B人员"
+    }
+  ],
+  "3": [
+    {
+      "id": "line_c_user",
+      "name": "生产线C人员"
+    }
+  ],
+  "rd": [
+    {
+      "id": "custom_user",
+      "name": "自定义样品人员"
+    }
+  ]
+}
