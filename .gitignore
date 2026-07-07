@@ -1,10 +1,22 @@
+node_modules/
+dist/
+*.tsbuildinfo
 .DS_Store
-__pycache__/
-*.py[cod]
-.venv/
-venv/
 
-# Raw project data and customer artifacts
+# Local environments and caches
+.env
+.env.*
+!.env.example
+.vite/
+.vitest/
+.cache/
+coverage/
+
+# Raw customer/project data. Keep these local only.
+docs/
+private/
+raw_data/
+output/
 *.dxf
 *.dwg
 *.docx
@@ -15,13 +27,9 @@ venv/
 *.bak
 ~$*
 .$*
-private/
-raw_data/
-Historical_Files/
-Logical_Diagram/
 
-# Generated DXF extraction outputs
-output/
+# Generated or derived project data
+pipe_names.csv
+page*_preview.logic.yaml
 pid_extract.xlsx
 pid_*.csv
-pipe_names.csv

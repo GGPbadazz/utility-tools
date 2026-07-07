@@ -1,0 +1,136 @@
+project:
+  id: generic-process-demo
+  name:
+    zh: 通用工艺逻辑图示例
+    en: Generic Process Logic Diagram Demo
+  language: zh-CN
+  version: 0.1.0
+
+units:
+  V-101:
+    type: vessel
+    label:
+      zh: 酸液储罐
+      en: Acid Storage Tank
+    attrs:
+      medium: H2SO4
+      material: FRP
+      volume: 5m3
+    layout:
+      x: 80
+      y: 180
+      width: 200
+      height: 120
+    ports:
+      outlet:
+        label:
+          zh: 出口
+          en: Outlet
+        kind: pipe
+        DN: 80
+        side: right
+      vent:
+        label:
+          zh: 放空口
+          en: Vent
+        kind: pipe
+        DN: 25
+        side: top
+
+  P-101:
+    type: pump
+    label:
+      zh: 酸液输送泵
+      en: Acid Transfer Pump
+    attrs:
+      flow_rate: 10m3/h
+      head: 25m
+      material: SS316
+    layout:
+      x: 420
+      y: 180
+      width: 200
+      height: 120
+    ports:
+      inlet:
+        label:
+          zh: 入口
+          en: Inlet
+        kind: pipe
+        DN: 80
+        side: left
+      outlet:
+        label:
+          zh: 出口
+          en: Outlet
+        kind: pipe
+        DN: 50
+        side: right
+
+  XV-101:
+    type: valve
+    label:
+      zh: 出口隔离阀
+      en: Outlet Isolation Valve
+    attrs:
+      valve_type: ball
+      material: UPVC
+    layout:
+      x: 760
+      y: 180
+      width: 200
+      height: 120
+    ports:
+      in:
+        label:
+          zh: 入口
+          en: Inlet
+        kind: pipe
+        DN: 50
+        side: left
+      out:
+        label:
+          zh: 出口
+          en: Outlet
+        kind: pipe
+        DN: 50
+        side: right
+
+connections:
+  - id: L-001A
+    kind: pipe
+    from: V-101.outlet
+    to: P-101.inlet
+    label:
+      zh: 酸液入口管线
+      en: Acid Suction Line
+    attrs:
+      line_id: L-001
+      DN: 80
+      medium: H2SO4
+      material: UPVC
+
+  - id: L-001B
+    kind: pipe
+    from: P-101.outlet
+    to: XV-101.in
+    label:
+      zh: 酸液出口管线
+      en: Acid Discharge Line
+    attrs:
+      line_id: L-001
+      DN: 50
+      medium: H2SO4
+      material: UPVC
+
+annotations:
+  - id: T-001
+    target: P-101
+    text:
+      zh: 备用泵接口需确认
+      en: Standby pump interface TBD
+    layout:
+      x: 440
+      y: 80
+      width: 180
+      height: 48

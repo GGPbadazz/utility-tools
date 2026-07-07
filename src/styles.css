@@ -1,0 +1,179 @@
+/* V0.6: Selected edge highlight */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 4 !important;
+  filter: drop-shadow(0 0 4px #ffd700);
+}
+
+.react-flow__edge-textbg {
+  fill: transparent !important;
+  stroke: transparent !important;
+}
+
+.pipeline-edge-label {
+  pointer-events: auto;
+  vector-effect: non-scaling-stroke;
+  paint-order: stroke;
+}
+
+.property-panel-focus {
+  animation: property-panel-focus 0.9s ease;
+  box-shadow: 0 0 0 2px #ffd700 inset;
+}
+
+@keyframes property-panel-focus {
+  0% {
+    background-color: rgba(255, 221, 89, 0.25);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.flow-cursor-select {
+  cursor: default;
+}
+
+.flow-cursor-select .react-flow__pane {
+  cursor: default;
+}
+
+.flow-cursor-pan {
+  cursor: grab;
+}
+
+.flow-cursor-pan .react-flow__pane {
+  cursor: grab;
+}
+
+.flow-cursor-connecting {
+  cursor: crosshair;
+}
+
+.flow-cursor-connecting .react-flow__pane {
+  cursor: crosshair;
+}
+
+.flow-cursor-dragging {
+  cursor: grabbing;
+}
+
+.flow-cursor-dragging .react-flow__pane {
+  cursor: grabbing;
+}
+
+.flow-mode-indicator {
+  border-left: 1px solid #eee;
+  padding-left: 8px;
+}
+
+/* Context menu styles */
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 160px;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.context-menu-hint {
+  padding: 6px 12px;
+  color: #666;
+  font-size: 12px;
+  border-bottom: 1px solid #eee;
+  background: #f7f7f7;
+}
+
+.context-menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.context-menu-item:hover {
+  background: #f0f4ff;
+}
+
+.context-menu-item.danger {
+  color: #e74c3c;
+}
+
+.context-menu-item.danger:hover {
+  background: #ffeaea;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: #eee;
+  margin: 4px 0;
+}
+
+/* Search bar styles */
+.search-bar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 4px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  width: 180px;
+  padding: 4px 0;
+}
+
+.search-bar .search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.search-bar .search-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.search-bar .search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-bar .search-result-item:hover {
+  background: #f0f4ff;
+}
+
+.search-bar .search-result-item .result-id {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.search-bar .search-result-item .result-label {
+  color: #666;
+}
