@@ -1,0 +1,27 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Raw project data and customer artifacts
+*.dxf
+*.dwg
+*.docx
+*.xls
+*.xlsx
+*.zip
+*.bkp
+*.bak
+~$*
+.$*
+private/
+raw_data/
+Historical_Files/
+Logical_Diagram/
+
+# Generated DXF extraction outputs
+output/
+pid_extract.xlsx
+pid_*.csv
+pipe_names.csv

@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管道标签排版工具</title>
+<script src="xlsx.full.min.js"></script>
+<script>
+  if (!window.XLSX) {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\\/script>');
+  }
+</script>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #e6e6e6;
+    color: #191919;
+    font-family: "PingFang SC", "Heiti SC", "Microsoft YaHei",
+                 "SimHei", "Noto Sans CJK SC", "Source Han Sans CN", sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: minmax(320px, 420px) 1fr;
+    min-height: 100vh;
+  }
+  .panel {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: auto;
+    padding: 18px;
+    border-right: 1px solid #c8c8c8;
+    background: #f7f7f7;
+  }
+  .panel h1 {
+    margin: 0 0 14px;
+    font-size: 21px;
+    line-height: 1.2;
+  }
+  .group {
+    margin: 0 0 14px;
+    padding: 12px;
+    border: 1px solid #d5d5d5;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .group-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 8px 0;
+  }
+  label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  input[type="file"],
+  input[type="number"],
+  input[type="text"],
+  select {
+    min-height: 30px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    padding: 4px 7px;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+  }
+  input[type="number"] { width: 72px; }
+  button {
+    min-height: 32px;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 11px;
+    background: #244f8f;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: #e7edf6;
+    color: #1d3557;
+    border: 1px solid #b9c8db;
+  }
+  button.warn {
+    background: #6b3410;
+  }
+  .status {
+    min-height: 22px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #4c4c4c;
+  }
+  .schema {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .schema th,
+  .schema td {
+    border: 1px solid #dedede;
+    padding: 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .schema th {
+    background: #f0f3f7;
+    font-weight: 800;
+  }
+  .editor-wrap {
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+  }
+  .editor {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .editor th,
+  .editor td {
+    border-bottom: 1px solid #ececec;
+    padding: 5px;
+    background: #fff;
+    white-space: nowrap;
+  }
+  .editor th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f0f3f7;
+    font-weight: 800;
+  }
+  .editor input,
+  .editor select {
+    width: 92px;
+    min-height: 28px;
+    font-size: 12px;
+  }
+  .editor .wide { width: 126px; }
+  .editor .narrow { width: 58px; }
+  .preview {
+    padding: 10mm 0;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto 10mm;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 5mm;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(0,0,0,0.3);
+    break-after: page;
+    page-break-after: always;
+  }
+  .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .label-sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    flex-shrink: 0;
+    border: 0.2mm dashed rgba(0,0,0,0.25);
+    font-weight: 900;
+  }
+  .label-6x30 { width: 60mm; height: 300mm; padding: 8mm 2mm; }
+  .label-4x20 { width: 40mm; height: 200mm; padding: 3mm 2mm; }
+  body.hide-borders .label-sheet { border-color: transparent; }
+  body.hide-serial .serial { display: none; }
+
+  .serial {
+    position: absolute;
+    top: 2mm;
+    right: 2.5mm;
+    font-size: 3.5mm;
+    font-weight: 700;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .arrows {
+    display: block;
+    flex-shrink: 0;
+  }
+  .label-6x30 .arrows { width: 50mm; }
+  .label-4x20 .arrows { width: 26mm; }
+
+  .text-part {
+    max-width: 100%;
+    line-height: 1;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .vertical-upright {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    -webkit-text-orientation: upright;
+    letter-spacing: 0.02em;
+  }
+  .horizontal {
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+    -webkit-text-orientation: mixed;
+    letter-spacing: 0;
+  }
+  .rotate-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .rotate-90 {
+    display: block;
+    max-width: none;
+    writing-mode: horizontal-tb;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    transform: rotate(90deg);
+    transform-origin: center;
+  }
+  .medium-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .marker {
+    line-height: 1;
+    font-weight: 900;
+  }
+  .label-6x30 .marker { font-size: 18mm; }
+  .label-4x20 .marker { font-size: 12mm; }
+
+  @media (max-width: 1100px) {
+    .app { grid-template-columns: 1fr; }
+    .panel {
+      position: static;
+      height: auto;
+      border-right: 0;
+      border-bottom: 1px solid #c8c8c8;
+    }
+  }
+
+  @media print {
+    html, body { background: #fff; }
+    .panel { display: none; }
+    .app { display: block; }
+    .preview { padding: 0; }
+    .page {
+      margin: 0;
+      box-shadow: none;
+    }
+    .label-sheet { border-color: transparent; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>管道标签排版工具</h1>
+
+    <section class="group">
+      <div class="group-title">文件</div>
+      <div class="row">
+        <input id="fileInput" type="file" accept=".csv,.xlsx,.xls">
+      </div>
+      <div class="row">
+        <button id="csvTemplateBtn" class="secondary">下载 CSV 模板</button>
+        <button id="xlsxTemplateBtn" class="secondary">下载 XLSX 模板</button>
+      </div>
+      <div class="row">
+        <button id="sampleBtn" class="secondary">载入示例</button>
+        <button id="printBtn">打印 / 导出 PDF</button>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="group">
+      <div class="group-title">排版</div>
+      <div class="row">
+        <label>每页张数 <input id="perPageInput" type="number" min="1" max="5" value="3"></label>
+        <label><input id="groupSizeInput" type="checkbox" checked> 按尺寸分组</label>
+      </div>
+      <div class="row">
+        <label><input id="serialInput" type="checkbox" checked> 显示序号</label>
+        <label><input id="borderInput" type="checkbox" checked> 显示裁切线</label>
+      </div>
+    </section>
+
+    <section class="group">
+      <div class="group-title">字段</div>
+      <table class="schema">
+        <thead><tr><th>列名</th><th>示例 / 选项</th></tr></thead>
+        <tbody id="schemaRows"></tbody>
+      </table>
+    </section>
+
+    <section class="group">
+      <div class="group-title">数据</div>
+      <div id="editorWrap" class="editor-wrap"></div>
+    </section>
+  </aside>
+
+  <main id="preview" class="preview">
+    <div id="root"></div>
+  </main>
+</div>
+
+<script>
+const HEADERS = [
+  '序号',
+  '介质',
+  '去向',
+  '张数',
+  '尺寸',
+  '字体颜色',
+  '背景颜色',
+  '箭头方向',
+  '介质朝向',
+  '括号朝向',
+  '括号同字号',
+  '去向朝向'
+];
+
+const FIELD_HELP = [
+  ['序号', '1、2、3，可留空自动编号'],
+  ['介质', '冷却水、压缩空气、排气'],
+  ['去向', '去TK-001、P-101来，可留空'],
+  ['张数', '整数'],
+  ['尺寸', '6x30、4x20'],
+  ['字体颜色', '白字、黑字、#FFFFFF'],
+  ['背景颜色', '灰色、棕色、黄色、紫色、绿色、#FFD400'],
+  ['箭头方向', '下、上、无'],
+  ['介质朝向', '自动、竖排正立、旋转90、横排'],
+  ['括号朝向', '自动、随介质、旋转90、横排、竖排正立'],
+  ['括号同字号', '是、否'],
+  ['去向朝向', '旋转90、竖排正立、横排']
+];
+
+const TEMPLATE_ROWS = [
+  ['1','冷却水','去TK-001','1','6x30','白字','绿色','下','自动','自动','否','旋转90'],
+  ['2','压缩空气','去P-101','1','6x30','黑字','黄色','上','自动','自动','否','旋转90'],
+  ['3','排气','','3','4x20','黑字','灰色','下','自动','自动','否','旋转90'],
+  ['4','清洗水','P-102来','1','6x30','白字','灰色','下','自动','自动','否','旋转90'],
+  ['5','热水(90℃)','去HX-001','1','6x30','白字','棕色','下','自动','旋转90','否','旋转90'],
+  ['6','备用','','1','4x20','白字','紫色','无','自动','自动','否','旋转90']
+];
+
+const ALIASES = {
+  id: ['序号', 'id', '编号'],
+  medium: ['介质', '文字内容', '内容', '名称'],
+  destination: ['去向', '目的/来源', '目的来源', '来源去向', '去/来', '设备号'],
+  quantity: ['张数', '数量', 'qty'],
+  size: ['尺寸', '规格', '尺寸 cm', 'size'],
+  fontColor: ['字体颜色', '字色', 'fontColor'],
+  bgColor: ['背景颜色', '底色', '背景色', 'bgColor'],
+  arrow: ['箭头方向', '箭头', '流向', 'arrow'],
+  mediumOrientation: ['介质朝向', '文字朝向', 'mediumOrientation'],
+  bracketOrientation: ['括号朝向', '括号内容朝向', 'bracketOrientation'],
+  bracketSameSize: ['括号同字号', '括号字号', 'bracketSameSize'],
+  destinationOrientation: ['去向朝向', '代号朝向', 'destinationOrientation']
+};
+
+const OPTIONS = {
+  size: ['6x30', '4x20'],
+  arrow: ['下', '上', '无'],
+  mediumOrientation: ['自动', '竖排正立', '旋转90', '横排'],
+  bracketOrientation: ['自动', '随介质', '旋转90', '横排', '竖排正立'],
+  bracketSameSize: ['是', '否'],
+  destinationOrientation: ['旋转90', '竖排正立', '横排']
+};
+
+const COLOR_MAP = {
+  '白字': '#ffffff',
+  '白': '#ffffff',
+  '黑字': '#000000',
+  '黑': '#000000',
+  '灰色': '#787878',
+  '灰底': '#787878',
+  '棕色': '#6b3410',
+  '棕色底': '#6b3410',
+  '棕底': '#6b3410',
+  '黄色': '#ffd400',
+  '正黄底': '#ffd400',
+  '黄底': '#ffd400',
+  '紫色': '#5b2c82',
+  '紫色底': '#5b2c82',
+  '绿底': '#1f8a3b',
+  '绿色': '#1f8a3b'
+};
+
+let rows = [];
+
+const els = {
+  fileInput: document.getElementById('fileInput'),
+  csvTemplateBtn: document.getElementById('csvTemplateBtn'),
+  xlsxTemplateBtn: document.getElementById('xlsxTemplateBtn'),
+  sampleBtn: document.getElementById('sampleBtn'),
+  printBtn: document.getElementById('printBtn'),
+  status: document.getElementById('status'),
+  schemaRows: document.getElementById('schemaRows'),
+  editorWrap: document.getElementById('editorWrap'),
+  root: document.getElementById('root'),
+  perPageInput: document.getElementById('perPageInput'),
+  groupSizeInput: document.getElementById('groupSizeInput'),
+  serialInput: document.getElementById('serialInput'),
+  borderInput: document.getElementById('borderInput')
+};
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function normalizeToken(value) {
+  return String(value ?? '').trim().replace(/\s+/g, '');
+}
+
+function colorValue(value, fallback) {
+  const v = normalizeToken(value);
+  if (!v) return fallback;
+  if (/^#[0-9a-fA-F]{3,8}$/.test(v)) return v;
+  return COLOR_MAP[v] || fallback;
+}
+
+function normalizeSize(value) {
+  const v = normalizeToken(value).toLowerCase().replace('*', 'x').replace('×', 'x');
+  return v === '4x20' ? '4x20' : '6x30';
+}
+
+function normalizeArrow(value, medium) {
+  const v = normalizeToken(value || '');
+  const source = `${v}${medium || ''}`;
+  if (/无|none|no/i.test(v)) return 'none';
+  if (source.includes('↑') || /上|up/i.test(v)) return 'up';
+  return 'down';
+}
+
+function normalizeOrientation(value, fallback) {
+  const v = normalizeToken(value);
+  if (!v) return fallback;
+  if (/自动|auto/i.test(v)) return 'auto';
+  if (/随介质/.test(v)) return 'same';
+  if (/竖|正立|upright/i.test(v)) return 'vertical';
+  if (/90|旋转|转/i.test(v)) return 'rotate';
+  if (/横|horizontal/i.test(v)) return 'horizontal';
+  return fallback;
+}
+
+function normalizeYes(value, fallback) {
+  const v = normalizeToken(value);
+  if (!v) return fallback;
+  if (/^(是|yes|y|true|1)$/i.test(v)) return true;
+  if (/^(否|no|n|false|0)$/i.test(v)) return false;
+  return fallback;
+}
+
+function getValue(row, key) {
+  const aliases = ALIASES[key] || [];
+  for (const name of aliases) {
+    if (row[name] !== undefined && row[name] !== null && String(row[name]).trim() !== '') {
+      return row[name];
+    }
+  }
+  return '';
+}
+
+function splitCombined(value) {
+  const text = String(value || '').trim();
+  const arrowMatch = text.match(/[↓↑]/);
+  const arrow = arrowMatch ? arrowMatch[0] : '';
+  let clean = text.replace(/[↓↑]/g, ' ').replace(/\s+/g, ' ').trim();
+  let medium = clean;
+  let destination = '';
+  const toIndex = clean.search(/\s去[A-Za-z0-9/_.-]+|去[A-Za-z0-9/_.-]+/);
+  const fromIndex = clean.search(/[A-Za-z0-9/_.-]+来/);
+  if (toIndex > 0) {
+    medium = clean.slice(0, toIndex).trim();
+    destination = clean.slice(toIndex).trim();
+  } else if (fromIndex > 0) {
+    medium = clean.slice(0, fromIndex).trim();
+    destination = clean.slice(fromIndex).trim();
+  }
+  return { medium, destination, arrow };
+}
+
+function normalizeRow(raw, index) {
+  const combined = splitCombined(getValue(raw, 'medium'));
+  const medium = String(combined.medium || getValue(raw, 'medium') || '').replace(/[↓↑]/g, '').trim();
+  const destination = String(getValue(raw, 'destination') || combined.destination || '').trim();
+  const bg = getValue(raw, 'bgColor');
+  const fg = getValue(raw, 'fontColor');
+  return {
+    id: String(getValue(raw, 'id') || index + 1).trim(),
+    medium,
+    destination,
+    quantity: Math.max(1, parseInt(getValue(raw, 'quantity') || '1', 10) || 1),
+    size: normalizeSize(getValue(raw, 'size')),
+    fontColor: colorValue(fg, ''),
+    fontColorRaw: String(fg || '').trim(),
+    bgColor: colorValue(bg, '#6b3410'),
+    bgColorRaw: String(bg || '').trim(),
+    arrow: normalizeArrow(getValue(raw, 'arrow') || combined.arrow, getValue(raw, 'medium')),
+    mediumOrientation: normalizeOrientation(getValue(raw, 'mediumOrientation'), 'auto'),
+    bracketOrientation: normalizeOrientation(getValue(raw, 'bracketOrientation'), 'auto'),
+    bracketSameSize: normalizeYes(getValue(raw, 'bracketSameSize'), false),
+    destinationOrientation: normalizeOrientation(getValue(raw, 'destinationOrientation'), 'rotate')
+  };
+}
+
+function inferFont(row) {
+  if (row.fontColor) return row.fontColor;
+  const bg = row.bgColor.toLowerCase();
+  if (bg === '#ffd400' || bg === '#bfbfbf') return '#000000';
+  return '#ffffff';
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let inQuotes = false;
+  const src = text.replace(/^\uFEFF/, '');
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    const next = src[i + 1];
+    if (inQuotes) {
+      if (ch === '"' && next === '"') {
+        cell += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        cell += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      row.push(cell);
+      cell = '';
+    } else if (ch === '\n') {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = '';
+    } else if (ch !== '\r') {
+      cell += ch;
+    }
+  }
+  row.push(cell);
+  rows.push(row);
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+function rowsToObjects(matrix) {
+  if (!matrix.length) return [];
+  const headers = matrix[0].map(h => String(h).trim());
+  return matrix.slice(1).map(line => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = line[i] ?? ''; });
+    return obj;
+  }).filter(obj => Object.values(obj).some(v => String(v).trim() !== ''));
+}
+
+function objectsFromTemplateRows(templateRows) {
+  return rowsToObjects([HEADERS, ...templateRows]);
+}
+
+function toCSV(matrix) {
+  return matrix.map(row => row.map(value => {
+    const s = String(value ?? '');
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(',')).join('\n');
+}
+
+function downloadBlob(name, type, content) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadCSVTemplate() {
+  const csv = '\uFEFF' + toCSV([HEADERS, ...TEMPLATE_ROWS]);
+  downloadBlob('label_template.csv', 'text/csv;charset=utf-8', csv);
+}
+
+function downloadXlsxTemplate() {
+  if (!window.XLSX) {
+    setStatus('XLSX 模板需要浏览器加载表格组件；已下载 CSV 模板。');
+    downloadCSVTemplate();
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const main = XLSX.utils.aoa_to_sheet([HEADERS, ...TEMPLATE_ROWS]);
+  main['!cols'] = [
+    { wch: 8 }, { wch: 18 }, { wch: 16 }, { wch: 8 }, { wch: 10 }, { wch: 10 },
+    { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }
+  ];
+  const options = XLSX.utils.aoa_to_sheet([
+    ['字段', '可选值'],
+    ['尺寸', OPTIONS.size.join('、')],
+    ['箭头方向', OPTIONS.arrow.join('、')],
+    ['介质朝向', OPTIONS.mediumOrientation.join('、')],
+    ['括号朝向', OPTIONS.bracketOrientation.join('、')],
+    ['括号同字号', OPTIONS.bracketSameSize.join('、')],
+    ['去向朝向', OPTIONS.destinationOrientation.join('、')],
+    ['背景颜色', '灰色、棕色、黄色、紫色、绿色、#HEX'],
+    ['字体颜色', '白字、黑字、#HEX']
+  ]);
+  options['!cols'] = [{ wch: 16 }, { wch: 56 }];
+  XLSX.utils.book_append_sheet(wb, main, '标签模板');
+  XLSX.utils.book_append_sheet(wb, options, '字段选项');
+  XLSX.writeFile(wb, 'label_template.xlsx');
+}
+
+function setStatus(message) {
+  els.status.textContent = message;
+}
+
+function loadRows(rawRows, message) {
+  rows = rawRows.map(normalizeRow).filter(row => row.medium);
+  renderEditor();
+  renderPreview();
+  setStatus(message || `已载入 ${rows.length} 行。`);
+}
+
+function handleCSV(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const matrix = parseCSV(String(reader.result || ''));
+    loadRows(rowsToObjects(matrix), `已载入 CSV：${file.name}`);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function handleXLSX(file) {
+  if (!window.XLSX) {
+    setStatus('XLSX 读取组件未加载，请改用 CSV。');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const wb = XLSX.read(reader.result, { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+    loadRows(raw, `已载入 Excel：${file.name}`);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderSchema() {
+  els.schemaRows.innerHTML = FIELD_HELP.map(([name, example]) =>
+    `<tr><td>${escapeHtml(name)}</td><td>${escapeHtml(example)}</td></tr>`
+  ).join('');
+}
+
+function editorInput(rowIndex, key, cls = '') {
+  const value = rows[rowIndex][key] ?? '';
+  return `<input class="${cls}" data-row="${rowIndex}" data-key="${key}" value="${escapeHtml(value)}">`;
+}
+
+function editorSelect(rowIndex, key, options, cls = '') {
+  const value = rows[rowIndex][key];
+  return `<select class="${cls}" data-row="${rowIndex}" data-key="${key}">
+    ${options.map(opt => `<option value="${escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${escapeHtml(displayOption(opt))}</option>`).join('')}
+  </select>`;
+}
+
+function displayOption(value) {
+  return ({
+    auto: '自动',
+    same: '随介质',
+    vertical: '竖排正立',
+    rotate: '旋转90',
+    horizontal: '横排',
+    down: '下',
+    up: '上',
+    none: '无',
+    true: '是',
+    false: '否'
+  })[value] ?? value;
+}
+
+function renderEditor() {
+  if (!rows.length) {
+    els.editorWrap.innerHTML = '';
+    return;
+  }
+  els.editorWrap.innerHTML = `<table class="editor">
+    <thead><tr>
+      <th>序号</th><th>介质</th><th>去向</th><th>张数</th><th>尺寸</th><th>字色</th><th>底色</th>
+      <th>箭头</th><th>介质</th><th>括号</th><th>同字号</th><th>去向</th>
+    </tr></thead>
+    <tbody>
+      ${rows.map((row, i) => `<tr>
+        <td>${editorInput(i, 'id', 'narrow')}</td>
+        <td>${editorInput(i, 'medium', 'wide')}</td>
+        <td>${editorInput(i, 'destination', 'wide')}</td>
+        <td><input class="narrow" data-row="${i}" data-key="quantity" type="number" min="1" value="${row.quantity}"></td>
+        <td>${editorSelect(i, 'size', OPTIONS.size, 'narrow')}</td>
+        <td>${editorInput(i, 'fontColorRaw', 'narrow')}</td>
+        <td>${editorInput(i, 'bgColorRaw', 'narrow')}</td>
+        <td>${editorSelect(i, 'arrow', ['down', 'up', 'none'], 'narrow')}</td>
+        <td>${editorSelect(i, 'mediumOrientation', ['auto', 'vertical', 'rotate', 'horizontal'], '')}</td>
+        <td>${editorSelect(i, 'bracketOrientation', ['auto', 'same', 'rotate', 'horizontal', 'vertical'], '')}</td>
+        <td>${editorSelect(i, 'bracketSameSize', [true, false], 'narrow')}</td>
+        <td>${editorSelect(i, 'destinationOrientation', ['rotate', 'vertical', 'horizontal'], '')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function refreshRowFromEditor(target) {
+  const rowIndex = Number(target.dataset.row);
+  const key = target.dataset.key;
+  if (!Number.isInteger(rowIndex) || !key || !rows[rowIndex]) return;
+  let value = target.value;
+  if (key === 'quantity') value = Math.max(1, parseInt(value || '1', 10) || 1);
+  if (key === 'bracketSameSize') value = value === 'true';
+  rows[rowIndex][key] = value;
+  if (key === 'fontColorRaw') rows[rowIndex].fontColor = colorValue(value, '');
+  if (key === 'bgColorRaw') rows[rowIndex].bgColor = colorValue(value, '#6b3410');
+  renderPreview();
+}
+
+function arrowsSVG(direction) {
+  if (direction === 'none') return '';
+  const arrow = '<polygon points="22,0 38,0 38,140 56,140 30,176 4,140 22,140"/>';
+  const arrows = `<g>${arrow}</g><g transform="translate(72,0)">${arrow}</g><g transform="translate(144,0)">${arrow}</g>`;
+  const transform = direction === 'up' ? ' transform="rotate(180 100 88)"' : '';
+  return `<svg class="arrows" viewBox="0 0 200 176" xmlns="http://www.w3.org/2000/svg" fill="currentColor" preserveAspectRatio="xMidYMid meet">
+    <g${transform}>${arrows}</g>
+  </svg>`;
+}
+
+function splitBracket(text) {
+  const match = String(text).match(/^(.+?)([（(].+[）)])$/);
+  return match ? { main: match[1], bracket: match[2] } : { main: text, bracket: '' };
+}
+
+function fontSize(row, part, text, sameSize = false) {
+  const len = [...String(text || '')].length;
+  const big = row.size === '4x20' ? 19 : 30;
+  const medium = row.size === '4x20' ? 15 : 24;
+  const small = row.size === '4x20' ? 11 : 17;
+  const tiny = row.size === '4x20' ? 8 : 13;
+  if (sameSize) return big;
+  if (part === 'code') {
+    if (len >= 14) return row.size === '4x20' ? 6 : 9;
+    if (len >= 10) return row.size === '4x20' ? 9 : 13;
+    if (len >= 6) return row.size === '4x20' ? 12 : 19;
+    return row.size === '4x20' ? 17 : 26;
+  }
+  if (len >= 10) return tiny;
+  if (len >= 5) return small;
+  if (len === 3) return medium;
+  return big;
+}
+
+function rotatedSlotHeight(text, fontMm, row) {
+  const limit = row.size === '4x20' ? 130 : 190;
+  return Math.min(limit, Math.max(fontMm * 1.3, [...String(text || '')].length * fontMm * 0.72));
+}
+
+function renderText(text, orientation, row, part, options = {}) {
+  const value = escapeHtml(text);
+  const mm = fontSize(row, part, text, options.sameSize);
+  if (orientation === 'horizontal') {
+    return `<div class="text-part horizontal" style="font-size:${mm}mm">${value}</div>`;
+  }
+  if (orientation === 'rotate') {
+    const height = rotatedSlotHeight(text, mm, row);
+    return `<div class="rotate-slot" style="width:${mm * 1.15}mm;height:${height}mm">
+      <div class="text-part rotate-90" style="font-size:${mm}mm">${value}</div>
+    </div>`;
+  }
+  return `<div class="text-part vertical-upright" style="font-size:${mm}mm">${value}</div>`;
+}
+
+function renderMedium(row) {
+  const split = splitBracket(row.medium);
+  let mediumOrientation = row.mediumOrientation === 'auto' ? 'vertical' : row.mediumOrientation;
+  if (!split.bracket) return renderText(split.main, mediumOrientation, row, 'medium');
+
+  let bracketOrientation = row.bracketOrientation;
+  if (bracketOrientation === 'auto') bracketOrientation = 'rotate';
+  if (bracketOrientation === 'same') bracketOrientation = mediumOrientation;
+  const main = renderText(split.main, mediumOrientation, row, 'medium');
+  const bracket = renderText(split.bracket, bracketOrientation, row, 'medium', {
+    sameSize: row.bracketSameSize
+  });
+  return `<div class="medium-stack">${main}${bracket}</div>`;
+}
+
+function parseDest(s) {
+  const value = String(s || '').trim();
+  if (!value) return null;
+  if (value.startsWith('去')) return { mode: 'to', code: value.slice(1) };
+  if (value.endsWith('来')) return { mode: 'from', code: value.slice(0, -1) };
+  return { mode: 'to', code: value };
+}
+
+function renderDestination(row) {
+  const dst = parseDest(row.destination);
+  if (!dst) return '';
+  const orientation = row.destinationOrientation || 'rotate';
+  const code = renderText(dst.code, orientation, row, 'code');
+  if (dst.mode === 'from') {
+    return `${code}<div class="marker">来</div>`;
+  }
+  return `<div class="marker">去</div>${code}`;
+}
+
+function renderLabel(row) {
+  const fg = inferFont(row);
+  const bg = row.bgColor || '#6b3410';
+  const parts = [
+    `<div class="serial">#${escapeHtml(row.id)}</div>`,
+    renderMedium(row),
+    arrowsSVG(row.arrow),
+    renderDestination(row)
+  ].filter(Boolean);
+  return `<div class="label-sheet label-${row.size}" style="background:${bg};color:${fg}">${parts.join('')}</div>`;
+}
+
+function expandedRows() {
+  const flat = [];
+  for (const row of rows) {
+    const qty = Math.max(1, Number(row.quantity) || 1);
+    for (let i = 0; i < qty; i++) flat.push(row);
+  }
+  if (!els.groupSizeInput.checked) return flat;
+  return [
+    ...flat.filter(row => row.size === '6x30'),
+    ...flat.filter(row => row.size === '4x20')
+  ];
+}
+
+function renderPreview() {
+  document.body.classList.toggle('hide-serial', !els.serialInput.checked);
+  document.body.classList.toggle('hide-borders', !els.borderInput.checked);
+  const flat = expandedRows();
+  els.root.innerHTML = '';
+  if (!flat.length) {
+    setStatus('没有可生成的标签。');
+    return;
+  }
+
+  const perPage = Math.max(1, Math.min(5, parseInt(els.perPageInput.value || '3', 10) || 3));
+  let page = null;
+  let count = 0;
+  let currentSize = null;
+  for (const row of flat) {
+    const shouldStart =
+      !page ||
+      count >= perPage ||
+      (els.groupSizeInput.checked && currentSize !== row.size);
+    if (shouldStart) {
+      page = document.createElement('div');
+      page.className = 'page';
+      els.root.appendChild(page);
+      count = 0;
+      currentSize = row.size;
+    }
+    page.insertAdjacentHTML('beforeend', renderLabel(row));
+    count++;
+  }
+
+  const pages = els.root.querySelectorAll('.page').length;
+  const c6 = flat.filter(row => row.size === '6x30').length;
+  const c4 = flat.filter(row => row.size === '4x20').length;
+  setStatus(`共 ${flat.length} 张（6×30: ${c6}，4×20: ${c4}）｜${pages} 页 A4`);
+}
+
+function initEvents() {
+  els.fileInput.addEventListener('change', event => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (/\.xlsx?$/i.test(file.name)) handleXLSX(file);
+    else handleCSV(file);
+  });
+  els.csvTemplateBtn.addEventListener('click', downloadCSVTemplate);
+  els.xlsxTemplateBtn.addEventListener('click', downloadXlsxTemplate);
+  els.sampleBtn.addEventListener('click', () => loadRows(objectsFromTemplateRows(TEMPLATE_ROWS), '已载入示例数据。'));
+  els.printBtn.addEventListener('click', () => window.print());
+  els.perPageInput.addEventListener('input', renderPreview);
+  els.groupSizeInput.addEventListener('change', renderPreview);
+  els.serialInput.addEventListener('change', renderPreview);
+  els.borderInput.addEventListener('change', renderPreview);
+  els.editorWrap.addEventListener('input', event => refreshRowFromEditor(event.target));
+  els.editorWrap.addEventListener('change', event => refreshRowFromEditor(event.target));
+}
+
+renderSchema();
+initEvents();
+loadRows(objectsFromTemplateRows(TEMPLATE_ROWS), '已载入示例数据。');
+</script>
+</body>
+</html>
