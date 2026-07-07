@@ -12,4 +12,14 @@
   
 - `rolling-screen-dashboard`: 滚动屏幕看板工具，主要用于连接应急管理局网站，自动同步企业（自己）每日风险等级的告示，并展现于生产企业的对外 LED 大屏幕。需要将账号密码写入文件。
 
+## 预览
+
+### PID 管道标签工具
+
+<img src="assets/images/pidtool.jpg" alt="PID 管道标签工具截图" width="820">
+
+### 化学分析流程系统模板
+
+<img src="assets/images/sample-analysis.jpg" alt="化学分析流程系统模板截图" width="820">
+
 默认分支只作为索引页；具体工具代码请切换到对应分支查看。
