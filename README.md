@@ -22,4 +22,8 @@
 
 <img src="assets/images/sample-analysis.jpg" alt="化学分析流程系统模板截图" width="820">
 
+### 滚动屏幕看板工具
+
+<img src="assets/images/rolling-screen.png" alt="滚动屏幕看板工具截图" width="820">
+
 默认分支只作为索引页；具体工具代码请切换到对应分支查看。
