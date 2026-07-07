@@ -1,0 +1,33 @@
+{
+  "name": "analysis-workflow-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop analysis-workflow-backend",
+    "pm2:restart": "pm2 restart analysis-workflow-backend",
+    "pm2:logs": "pm2 logs analysis-workflow-backend"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.8.1",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.1",
+    "multer": "^1.4.5-lts.1",
+    "pdf-lib": "^1.17.1",
+    "sqlite3": "^5.1.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "node-gyp": "^12.3.0",
+    "nodemon": "^3.0.1",
+    "pm2": "^5.3.0"
+  }
+}
