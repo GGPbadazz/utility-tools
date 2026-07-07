@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>大屏远程编辑</title>
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+  <main class="admin-page">
+    <header class="header">
+      <div>
+        <h1>大屏远程编辑</h1>
+        <p>保存后，大屏页面会按刷新间隔自动更新。</p>
+      </div>
+      <div class="header-actions">
+        <a class="screen-link" href="/screen" target="_blank">打开大屏</a>
+        <a class="screen-link" href="/led" target="_blank">打开小屏</a>
+        <a class="screen-link" href="/led-test" target="_blank">测试小屏</a>
+      </div>
+    </header>
+
+    <section class="card ticker-editor-card">
+      <div class="section-head">
+        <div>
+          <label>滚动文字编辑区域</label>
+          <p>可添加多条滚动文字，分别设置字号、颜色、上下位置、速度和方向。</p>
+        </div>
+        <button id="addTickerBtn" type="button">新增文本框</button>
+      </div>
+      <div class="ticker-preview" id="tickerPreview"></div>
+      <div id="tickerItemsEditor" class="ticker-items-editor"></div>
+      <div id="moduleAssignment-ticker" class="module-assignment-inline"></div>
+    </section>
+
+    <section class="card two-columns">
+      <div>
+        <label>展示内容类型</label>
+        <select id="contentType">
+          <option value="text">文字</option>
+          <option value="image">图片</option>
+        </select>
+      </div>
+      <div>
+        <label>刷新间隔，毫秒</label>
+        <input id="refreshInterval" type="number" min="1000" step="1000" />
+      </div>
+    </section>
+
+    <section class="card">
+      <label>展示文字</label>
+      <textarea id="contentText" rows="4" placeholder="请输入下方内容区域要显示的文字"></textarea>
+    </section>
+
+    <section class="card upload-card">
+      <div>
+        <label>上传展示图片</label>
+        <input id="contentImageFile" type="file" accept="image/*" />
+        <button id="uploadContentImageBtn" type="button">上传展示图片</button>
+        <div class="link-editor">
+          <label>或填写图片链接</label>
+          <div class="link-row">
+            <input id="contentImageUrlInput" type="url" placeholder="https://example.com/image.jpg" />
+            <button id="applyContentImageUrlBtn" type="button">应用图片链接</button>
+          </div>
+          <p class="small-hint">图片会最大化显示在区域内，但保持比例，不会被拉伸。</p>
+        </div>
+      </div>
+      <img id="contentImagePreview" alt="展示图片预览" />
+      <div id="moduleAssignment-content" class="module-assignment-inline"></div>
+    </section>
+
+    <section class="card upload-card">
+      <div>
+        <label>上传视频</label>
+        <input id="videoFile" type="file" accept="video/*" />
+        <button id="uploadVideoBtn" type="button">上传视频</button>
+        <div class="link-editor">
+          <label>或填写视频链接</label>
+          <div class="link-row">
+            <input id="videoUrlInput" type="url" placeholder="https://example.com/video.mp4" />
+            <button id="applyVideoUrlBtn" type="button">应用视频链接</button>
+          </div>
+          <p class="small-hint">建议使用浏览器可直接播放的 mp4、mov、webm 等视频文件链接。</p>
+        </div>
+      </div>
+      <div id="videoUrl" class="hint"></div>
+      <div id="moduleAssignment-mediaVideo" class="module-assignment-inline"></div>
+    </section>
+
+    <section class="card upload-card">
+      <div>
+        <label>上传图片序列</label>
+        <label>图片序列翻页间隔，毫秒</label>
+        <input id="slideInterval" type="number" min="1000" step="1000" />
+        <p class="small-hint">方式一：选择多张图片；方式二：选择一个图片文件夹。请先把 PDF 或 PPT 导出为 JPG/PNG 图片，每页一张。</p>
+        <div class="slide-upload-options">
+          <div>
+            <label>选择多个图片</label>
+            <input id="slideFiles" type="file" accept="image/*" multiple />
+          </div>
+          <div>
+            <label>选择图片文件夹</label>
+            <input id="slideFolder" type="file" accept="image/*" webkitdirectory directory multiple />
+          </div>
+        </div>
+        <button id="uploadSlidesBtn" type="button">上传图片序列</button>
+        <p class="small-hint">上传文件夹时会保留文件夹内相对路径排序；建议图片命名为 01、02、03 或 001、002、003，确保播放顺序正确。</p>
+      </div>
+      <div id="slideList" class="hint slide-list">当前未上传图片序列</div>
+      <div id="moduleAssignment-mediaSlides" class="module-assignment-inline"></div>
+    </section>
+
+    <section class="card upload-card">
+      <div>
+        <label>模拟设备上传图片</label>
+        <input id="deviceImageFile" type="file" accept="image/*" />
+        <button id="uploadDeviceImageBtn" type="button">上传设备图片</button>
+      </div>
+      <img id="deviceImagePreview" alt="设备图片预览" />
+      <div id="moduleAssignment-device" class="module-assignment-inline"></div>
+    </section>
+
+    <section class="card upload-card remote-image-card">
+      <div>
+        <label>每日公告图片同步</label>
+        <p class="small-hint">固定获取“企业基础” -> “每日承诺”中当天记录的公告图片，保存为大屏可直接显示的本地图片。</p>
+        <label class="tiny-hint-row">
+          <input id="remoteImageEnabled" type="checkbox" />
+          启用远程图片同步
+        </label>
+        <div class="remote-login-grid">
+          <div>
+            <label>账号</label>
+            <input id="remoteImageUsername" type="text" autocomplete="username" />
+          </div>
+          <div>
+            <label>密码</label>
+            <input id="remoteImagePassword" type="password" autocomplete="current-password" placeholder="留空则保留原密码" />
+          </div>
+        </div>
+        <div class="sync-rule-box">
+          每天 10:00 自动获取当天公告图片；如果失败，会在 1 小时后重试，每天最多尝试 3 次。
+        </div>
+        <button id="syncRemoteImageBtn" type="button">立即同步公告图片</button>
+        <p id="remoteImageStatus" class="small-hint">尚未同步</p>
+        <p class="small-hint">本地图片地址：<span id="remoteImageLocalUrl">尚未生成</span></p>
+      </div>
+      <div>
+        <label>公告图片预览</label>
+        <img id="remoteImagePreview" alt="公告图片预览" />
+      </div>
+      <div id="moduleAssignment-remoteImage" class="module-assignment-inline"></div>
+    </section>
+
+    <footer class="actions">
+      <button id="saveBtn" class="primary" type="button">保存配置</button>
+      <span id="message"></span>
+    </footer>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+  "tickerText": "欢迎使用滚动大屏系统，请在管理页面编辑这段滚动文字。",
+  "tickerItems": [
+    {
+      "id": "ticker-default-1",
+      "text": "欢迎使用滚动大屏系统，请在管理页面编辑这段滚动文字。",
+      "top": 48,
+      "left": 0,
+      "fontSize": 54,
+      "color": "#f3f5f7",
+      "weight": 700,
+      "speed": 22,
+      "direction": "left",
+      "enabled": true
+    },
+    {
+      "id": "ticker-default-2",
+      "text": "可添加多条文字，分别设置位置、字号、颜色、速度和滚动方向。",
+      "top": 68,
+      "left": 0,
+      "fontSize": 30,
+      "color": "#66d9ef",
+      "weight": 500,
+      "speed": 26,
+      "direction": "left",
+      "enabled": true
+    }
+  ],
+  "mediaMode": "video",
+  "videoUrl": "",
+  "slideImageUrls": [],
+  "slideInterval": 5000,
+  "contentType": "text",
+  "contentText": "这里显示远程编辑的文字内容，也可以切换为上传图片。",
+  "contentImageUrl": "",
+  "deviceImageUrl": "/uploads/device-latest.jpg",
+  "refreshInterval": 5000,
+  "remoteImage": {
+    "enabled": false,
+    "loginUrl": "",
+    "loginMethod": "POST",
+    "usernameField": "username",
+    "passwordField": "password",
+    "username": "",
+    "password": "",
+    "sourceUrl": "",
+    "targetLinkContains": "公告图片下载",
+    "targetPageUrl": "",
+    "imageUrlKeyword": "board-iframe",
+    "syncIntervalMinutes": 1440,
+    "localImageUrl": "",
+    "lastSyncedAt": "",
+    "lastSyncStatus": "",
+    "lastSyncMessage": ""
+  },
+  "panelAssignments": {
+    "ticker": 1,
+    "mediaVideo": 2,
+    "mediaSlides": 4,
+    "content": 3,
+    "device": null,
+    "remoteImage": null
+  }
+}

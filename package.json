@@ -1,0 +1,21 @@
+{
+  "name": "rolling-screen-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "四宫格滚动大屏：远程编辑、文字滚动、视频播放、图片轮播、上传内容和公告图片同步。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "fetch:bulletin": "node scripts/fetch-bulletin-image.js",
+    "install:playwright:cn": "PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright npx playwright install chromium --no-shell",
+    "schedule:bulletin:mac": "./scripts/install-bulletin-launchd.sh",
+    "unschedule:bulletin:mac": "./scripts/uninstall-bulletin-launchd.sh",
+    "fetch:bulletin:daily": "node scripts/fetch-bulletin-daily.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^2.1.1",
+    "playwright": "1.55.0"
+  }
+}
